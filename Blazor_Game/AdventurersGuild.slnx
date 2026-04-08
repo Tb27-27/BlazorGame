@@ -1,0 +1,5 @@
+<Solution>
+  <Project Path="../Product/Product.csproj" Id="874d218c-04e7-455d-80b8-8440ca5416fe" />
+  <Project Path="../Sales/Sales.csproj" Id="d54f40b9-2a5d-401b-8b53-85b1f0c9f1c4" />
+  <Project Path="Guild.UI.csproj" />
+</Solution>
