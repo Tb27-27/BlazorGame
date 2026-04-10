@@ -1,4 +1,4 @@
-using Guild.UI.Components;
+using Shop.Components;
 
 var builder = WebApplication.CreateBuilder(args);
 

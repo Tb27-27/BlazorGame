@@ -1,7 +1,7 @@
 ﻿namespace Sales;
 using Product;
 
-{
+
 
     // Vervanger voor Customer
     public class Adventurer
@@ -87,4 +87,4 @@ using Product;
             MissionSuccess = missionSuccess;
         }
     }
-}
+
