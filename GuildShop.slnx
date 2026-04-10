@@ -1,0 +1,5 @@
+<Solution>
+  <Project Path="Core/Core.csproj" Id="759c1271-68b3-4747-b828-ee4187d6e30e" />
+  <Project Path="Engine/Engine.csproj" Id="0484e99d-6f8e-40e8-b565-ce398225cfa2" />
+  <Project Path="GuildShop/GuildShop.csproj" />
+</Solution>

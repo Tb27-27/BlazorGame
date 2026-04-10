@@ -1,0 +1,162 @@
+﻿@page "/"
+@using Engine
+@using Core
+@using System.Linq
+
+@rendermode InteractiveServer
+
+@inject GameEngine Game
+
+<PageTitle>Guild Shop</PageTitle>
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-md-3">
+            <div class="card mb-3">
+                <div class="card-body">
+                    <h5 class="card-title">Shop Stats</h5>
+                    <p><strong>Day:</strong> @Game.State.Day</p>
+                    <p><strong>Gold:</strong> @Game.State.Gold</p>
+                    <p><strong>XP:</strong> @Game.State.Experience</p>
+                    <p><strong>Customers Today:</strong> @Game.State.CustomersServedToday / 3</p>
+                    @if (Game.State.CustomersServedToday >= 3)
+                    {
+                        <button class="btn btn-primary w-100" @onclick="AdvanceDay">Start Next Day</button>
+                    }
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-body" style="height: 300px; overflow-y: auto;">
+                    <h5 class="card-title">Daily Log</h5>
+                    @foreach (var log in Enumerable.Reverse(Game.State.DailyLog))
+                    {
+                        <div style="font-size: 0.9em; border-bottom: 1px solid #eee; padding: 4px 0;">@log</div>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-9">
+            @if (Game.State.CurrentQuest != null)
+            {
+                <div class="alert alert-info">
+                    <h4>@Game.State.CurrentAdventurer?.Name wants to do: @Game.State.CurrentQuest.Title</h4>
+                    <p><em>"@Game.State.CurrentQuest.Description"</em></p>
+                    <div>
+                        <strong>Needs:</strong>
+                        @foreach (var tag in Game.State.CurrentQuest.RequiredTags)
+                        {
+                            <span class="badge bg-success me-1">@tag</span>
+                        }
+                        <br />
+                        <strong>Avoid:</strong>
+                        @foreach (var tag in Game.State.CurrentQuest.PenalizedTags)
+                        {
+                            <span class="badge bg-danger me-1">@tag</span>
+                        }
+                    </div>
+                </div>
+
+                <div class="card mb-3 bg-light">
+                    <div class="card-body">
+                        <h5>Equipped Gear (Click to unequip)</h5>
+                        <div class="d-flex gap-3">
+                            <div class="border p-2 bg-white" style="width: 150px; height: 100px; cursor: pointer;"
+                                 @onclick="() => Unequip(Game.State.EquippedWeapon)">
+                                <h6>Weapon</h6>
+                                @if (Game.State.EquippedWeapon != null)
+                                {
+                                    <span class="text-primary fw-bold">@Game.State.EquippedWeapon.Name</span>
+                                }
+                            </div>
+                            <div class="border p-2 bg-white" style="width: 150px; height: 100px; cursor: pointer;"
+                                 @onclick="() => Unequip(Game.State.EquippedArmor)">
+                                <h6>Armor</h6>
+                                @if (Game.State.EquippedArmor != null)
+                                {
+                                    <span class="text-primary fw-bold">@Game.State.EquippedArmor.Name</span>
+                                }
+                            </div>
+                            <div class="border p-2 bg-white flex-grow-1" style="height: 100px;">
+                                <h6>Consumables (@Game.State.EquippedConsumables.Count/3)</h6>
+                                <div class="d-flex gap-2 flex-wrap">
+                                    @foreach (var cons in Game.State.EquippedConsumables.ToList())
+                                    {
+                                        <span class="badge bg-secondary p-2" style="cursor: pointer;" @onclick="() => Unequip(cons)">
+                                            @cons.Name ✖
+                                        </span>
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                        <button class="btn btn-warning mt-3" @onclick="SendAdventurer">Send Adventurer on Quest!</button>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-body">
+                        <h5>Your Hand (Click to play/equip)</h5>
+                        <div class="d-flex gap-2 flex-wrap">
+                            @foreach (var card in Game.State.Hand.ToList())
+                            {
+                                <div class="card border-primary" style="width: 140px; cursor: pointer;" @onclick="() => PlayCard(card)">
+                                    <div class="card-body text-center p-2">
+                                        <h6 class="card-title">@card.Name</h6>
+                                        <span class="badge bg-secondary">@card.Type</span>
+                                        @if (card is ItemCard ic)
+                                        {
+                                            <div class="mt-2" style="font-size: 0.8em;">
+                                                @foreach (var tag in ic.Tags)
+                                                {
+                                                    <div>* @tag</div>
+                                                }
+                                            </div>
+                                        }
+                                        @if (card is ActionCard ac)
+                                        {
+                                            <div class="mt-2 text-muted" style="font-size: 0.8em;">@ac.Description</div>
+                                        }
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                </div>
+            }
+            else
+            {
+                <div class="alert alert-secondary">The shop is closed for the day. Check your log and start the next day!</div>
+            }
+        </div>
+    </div>
+</div>
+
+@code {
+    private void PlayCard(Card card)
+    {
+        Game.PlayCard(card);
+        StateHasChanged();
+    }
+
+    private void SendAdventurer()
+    {
+        Game.SendAdventurer();
+        StateHasChanged();
+    }
+
+    private void AdvanceDay()
+    {
+        Game.State.Day++;
+        Game.StartDay();
+        StateHasChanged();
+    }
+
+    private void Unequip(ItemCard? card)
+    {
+        if (card == null) return;
+        
+        Game.UnequipCard(card);
+        StateHasChanged();
+    }
+}
