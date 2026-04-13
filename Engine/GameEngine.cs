@@ -53,21 +53,21 @@ namespace Engine
                 PenalizedTags = new List<ItemTag> { ItemTag.Heavy, ItemTag.LightSource }
             });
 
-            _questDatabase.Add(new Quest
-            {
-                Title = "Haunted Crypt",
-                Description = "Undead lurk in pitch blackness. Requires holy light and sturdy armor.",
-                RequiredTags = new List<ItemTag> { ItemTag.LightSource, ItemTag.Medium, ItemTag.Buff },
-                PenalizedTags = new List<ItemTag> { ItemTag.Short }
-            });
+            //_questDatabase.Add(new Quest
+            //{
+            //    Title = "Haunted Crypt",
+            //    Description = "Undead lurk in pitch blackness. Requires holy light and sturdy armor.",
+            //    RequiredTags = new List<ItemTag> { ItemTag.LightSource, ItemTag.Medium, ItemTag.Buff },
+            //    PenalizedTags = new List<ItemTag> { ItemTag.Short }
+            //});
 
-            _questDatabase.Add(new Quest
-            {
-                Title = "Dragon's Lair",
-                Description = "Absolute suicide without heavy protection and lots of healing.",
-                RequiredTags = new List<ItemTag> { ItemTag.Heavy, ItemTag.Healing, ItemTag.Buff },
-                PenalizedTags = new List<ItemTag> { ItemTag.Light, ItemTag.Short }
-            });
+            //_questDatabase.Add(new Quest
+            //{
+            //    Title = "Dragon's Lair",
+            //    Description = "Absolute suicide without heavy protection and lots of healing.",
+            //    RequiredTags = new List<ItemTag> { ItemTag.Heavy, ItemTag.Healing, ItemTag.Buff },
+            //    PenalizedTags = new List<ItemTag> { ItemTag.Light, ItemTag.Short }
+            //});
 
             // Deck
             State.Deck.AddRange(new List<Card>
@@ -96,6 +96,8 @@ namespace Engine
                     // Actions
                     new ActionCard { Name = "Pot of Quark", Description = "Draw 2 Cards", CardsToDraw = 2, Type = SlotType.Action }
             });
+
+            GenerateShop();
         }
 
         public void StartDay()
@@ -136,7 +138,7 @@ namespace Engine
             // Replenish hand up to 5 cards (keep existing cards)
             // Chnged to maxCardsInHand variable for easier tweaking and potential future upgrades
             int cardsNeeded = (State.maxCardsInHand - State.Hand.Count);
-            if (cardsNeeded > 1)
+            if (cardsNeeded > 0)
             {
                 DrawCards(cardsNeeded);
             }
@@ -280,7 +282,7 @@ namespace Engine
             }
             else
             {
-                State.DailyLog.Add($"> FAILED! ({successChance}% chance). {State.CurrentAdventurer.Name} died.");
+                State.DailyLog.Add($"> FAILED! ({successChance}% chance). {State.CurrentAdventurer.Name ?? "bob"} died.");
             }
 
             // Cleanup and move to next
@@ -292,8 +294,44 @@ namespace Engine
             NextCustomer();
         }
 
-        public void Upgrade()
+        public void GenerateShop()
         {
+            State.ShopInventory.Clear();
+
+            State.ShopInventory.Add(new ShopListing
+            {
+                Cost = 75,
+                Card = new ItemCard { Name = "Holy Grenade", Type = SlotType.Consumable, Tags = new() { ItemTag.Heavy, ItemTag.LightSource, ItemTag.Ranged } }
+            });
+            State.ShopInventory.Add(new ShopListing
+            {
+                Cost = 150,
+                Card = new ItemCard { Name = "Dragon Slayer", Type = SlotType.Weapon, Tags = new() { ItemTag.Heavy, ItemTag.Long, ItemTag.Buff } }
+            });
+            State.ShopInventory.Add(new ShopListing
+            {
+                Cost = 100,
+                Card = new ActionCard { Name = "Adrenaline Surge", Description = "Draw 3 Cards", CardsToDraw = 3, Type = SlotType.Action }
+            });
+        }
+
+        public void TryUpgradeHandSize()
+        {
+            if (State.Gold >= 100)
+            {
+                State.Gold -= 100;
+                State.maxCardsInHand++;
+            }
+        }
+
+        public void TryBuyCard(ShopListing item)
+        {
+            if (State.Gold >= item.Cost && State.ShopInventory.Contains(item))
+            {
+                State.Gold -= item.Cost;
+                State.Deck.Add(item.Card);
+                State.ShopInventory.Remove(item);
+            }
         }
     }
 }

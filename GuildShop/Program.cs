@@ -4,7 +4,8 @@ using Engine;
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
-builder.Services.AddScoped<GameEngine>();
+builder.Services.AddSingleton<GameEngine>();
+
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 

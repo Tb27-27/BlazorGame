@@ -23,6 +23,10 @@ namespace Engine
         public ItemCard? EquippedArmor { get; set; }
         public List<ItemCard> EquippedConsumables { get; set; } = new();
 
+        // hand size
         public int maxCardsInHand { get; set; } = 5;
+
+        // Shop inventory
+        public List<ShopListing> ShopInventory { get; set; } = new();
     }
 }

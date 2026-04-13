@@ -1,7 +1,83 @@
 ﻿@page "/UpgradeShop"
+@rendermode InteractiveServer
+@using Core
+@using Engine
+@inject GameEngine Engine
+@inject NavigationManager NavManager
 
-<h3>UpgradeShop</h3>
+<div style="max-width: 600px; margin: auto; padding: 20px; font-family: sans-serif;">
+    <h2>🛒 The Upgrade Shop</h2>
+    
+    <div style="background: #eee; padding: 10px; border-radius: 8px; margin-bottom: 20px;">
+        <strong>Your Resources:</strong>
+        <span style="margin-left: 15px;">🪙 Gold: @Engine.State.Gold</span>
+        <span style="margin-left: 15px;">✨ Experience: @Engine.State.Experience</span>
+    </div>
+
+    <hr />
+
+    <h3>Passive Upgrades</h3>
+    <div style="border: 1px solid #ccc; padding: 10px; border-radius: 5px; margin-bottom: 10px;">
+        <h4>Bigger Warehouse</h4>
+        <p>Increases your maximum hand size by 1. (Current: @Engine.State.maxCardsInHand)</p>
+        <p><strong>Cost: 100g</strong></p>
+        <button disabled="@(Engine.State.Gold < 100)" @onclick="BuyHandSizeUpgrade">
+            Buy Upgrade
+        </button>
+    </div>
+
+    <hr />
+
+    <h3>Card Shop</h3>
+    <p><em>Cards purchased here are added directly to your deck for the next day.</em></p>
+    
+    @foreach (var shopItem in Engine.State.ShopInventory)
+    {
+        <div style="border: 1px solid #ccc; padding: 10px; border-radius: 5px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center;">
+            <div>
+                <h4 style="margin: 0;">@shopItem.Card.Name</h4>
+                
+                @if (shopItem.Card is ItemCard itemCard)
+                {
+                    <p style="margin: 5px 0; font-size: 0.9em;">Type: @itemCard.Type | Tags: @string.Join(", ", itemCard.Tags)</p>
+                }
+                else if (shopItem.Card is ActionCard actionCard)
+                {
+                    <p style="margin: 5px 0; font-size: 0.9em;">@actionCard.Description</p>
+                }
+                
+                <p style="margin: 0;"><strong>Cost: @shopItem.Cost g</strong></p>
+            </div>
+
+            <button disabled="@(Engine.State.Gold < shopItem.Cost)" @onclick="() => BuyShopItem(shopItem)">
+                Buy Card
+            </button>
+        </div>
+    }
+
+    <hr />
+
+    <div style="text-align: right; margin-top: 20px;">
+        <button style="padding: 10px 20px; font-size: 1.1em;" @onclick="ReturnToTavern">
+            Return to Tavern ➡️
+        </button>
+    </div>
+</div>
 
 @code {
+    
+    private void BuyHandSizeUpgrade()
+    {
+        Engine.TryUpgradeHandSize();
+    }
 
+    private void BuyShopItem(ShopListing item)
+    {
+        Engine.TryBuyCard(item);
+    }
+
+    private void ReturnToTavern()
+    {
+        NavManager.NavigateTo("/");
+    }
 }
