@@ -1,0 +1,26 @@
+﻿@page "/SalesLog"
+@using Engine
+@using Core
+@using System.Linq
+
+@rendermode InteractiveServer
+
+@inject GameEngine Game
+
+<PageTitle>Adventurer's Logs</PageTitle>
+
+
+<div class="card">
+    <div class="card-body" style="height: 300px; overflow-y: auto;">
+        <h5 class="card-title">Log of adventurer's</h5>
+        @foreach (var log in Enumerable.Reverse(Game.State.DailyLog))
+        {
+            <div style="font-size: 0.9em; border-bottom: 1px solid #eee; padding: 4px 0;">@log</div>
+        }
+    </div>
+</div>
+
+
+@code {
+
+}
