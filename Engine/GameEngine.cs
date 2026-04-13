@@ -12,8 +12,6 @@ namespace Engine
         private List<Quest> _questDatabase = new();
         private List<string> _adventurerNames = new();
 
-        public int maxCardsInHand = 5;
-
         public GameEngine()
         {
             State = new GameState();
@@ -38,6 +36,7 @@ namespace Engine
                 RequiredTags = new List<ItemTag> { ItemTag.LightSource, ItemTag.Short, ItemTag.Light },
                 PenalizedTags = new List<ItemTag> { ItemTag.Heavy, ItemTag.Long }
             });
+
             _questDatabase.Add(new Quest
             {
                 Title = "Troll Bridge",
@@ -45,6 +44,15 @@ namespace Engine
                 RequiredTags = new List<ItemTag> { ItemTag.Heavy, ItemTag.Healing },
                 PenalizedTags = new List<ItemTag> { ItemTag.Short, ItemTag.Light }
             });
+
+            _questDatabase.Add(new Quest
+            {
+                Title = "Bandit Camp Outskirts",
+                Description = "A stealthy approach is best. Keep it light and keep your distance.",
+                RequiredTags = new List<ItemTag> { ItemTag.Light, ItemTag.Ranged },
+                PenalizedTags = new List<ItemTag> { ItemTag.Heavy, ItemTag.LightSource }
+            });
+
             _questDatabase.Add(new Quest
             {
                 Title = "Haunted Crypt",
@@ -52,13 +60,7 @@ namespace Engine
                 RequiredTags = new List<ItemTag> { ItemTag.LightSource, ItemTag.Medium, ItemTag.Buff },
                 PenalizedTags = new List<ItemTag> { ItemTag.Short }
             });
-            _questDatabase.Add(new Quest
-            {
-                Title = "Bandit Camp Outskirts",
-                Description = "A stealthy approach is best. Keep it light and keep your distance.",
-                RequiredTags = new List<ItemTag> { ItemTag.Light, ItemTag.Long },
-                PenalizedTags = new List<ItemTag> { ItemTag.Heavy, ItemTag.LightSource } // A torch gives you away!
-            });
+
             _questDatabase.Add(new Quest
             {
                 Title = "Dragon's Lair",
@@ -80,6 +82,7 @@ namespace Engine
                     // Weapons
                     new ItemCard { Name = "Short Sword", Type = SlotType.Weapon, Tags = new() { ItemTag.Short, ItemTag.Light } },
                     new ItemCard { Name = "Iron Dagger", Type = SlotType.Weapon, Tags = new() { ItemTag.Short } },
+                    new ItemCard { Name = "Elven Longbow", Type = SlotType.Weapon, Tags = new() { ItemTag.Ranged, ItemTag.Medium } },
                     new ItemCard { Name = "Greatsword", Type = SlotType.Weapon, Tags = new() { ItemTag.Long, ItemTag.Heavy } },
                     new ItemCard { Name = "Spear", Type = SlotType.Weapon, Tags = new() { ItemTag.Long, ItemTag.Medium } },
                     new ItemCard { Name = "Warhammer", Type = SlotType.Weapon, Tags = new() { ItemTag.Short, ItemTag.Heavy } },
@@ -132,7 +135,7 @@ namespace Engine
 
             // Replenish hand up to 5 cards (keep existing cards)
             // Chnged to maxCardsInHand variable for easier tweaking and potential future upgrades
-            int cardsNeeded = (maxCardsInHand - State.Hand.Count);
+            int cardsNeeded = (State.maxCardsInHand - State.Hand.Count);
             if (cardsNeeded > 1)
             {
                 DrawCards(cardsNeeded);
@@ -219,24 +222,53 @@ namespace Engine
         {
             if (State.CurrentQuest == null) return;
 
-            // Base chance
-            int successChance = 25;
-            
-            
+            // Configuration variables for easy tweaking
+            int baseChance = 25;
+            int maxChance = 100;
+            int penaltyPerTag = 15;
+
             var equippedTags = new List<ItemTag>();
 
-            // Calculate Success Rate
+            // Collect all equipped tags
             if (State.EquippedWeapon != null) equippedTags.AddRange(State.EquippedWeapon.Tags);
             if (State.EquippedArmor != null) equippedTags.AddRange(State.EquippedArmor.Tags);
             foreach (var cons in State.EquippedConsumables) equippedTags.AddRange(cons.Tags);
 
-            foreach (var tag in State.CurrentQuest.RequiredTags)
-                if (equippedTags.Contains(tag)) successChance += 25;
+            // Modular success chances
+            int successChance = baseChance;
+            int requiredCount = State.CurrentQuest.RequiredTags.Count;
 
+            if (requiredCount > 0)
+            {
+                // Calculate exactly how much each tag needs to be worth to reach 100%
+                float chancePerTag = (float)(maxChance - baseChance) / requiredCount;
+
+                int matchedTags = 0;
+                foreach (var tag in State.CurrentQuest.RequiredTags)
+                {
+                    if (equippedTags.Contains(tag))
+                    {
+                        matchedTags++;
+                    }
+                }
+
+                // Add the modular value
+                successChance += (int)Math.Round(matchedTags * chancePerTag);
+            }
+            else
+            {
+                // If a quest has no tags, it defaults to a simple success chance without penalties
+                successChance = maxChance;
+            }
+
+            // Apply Penalties
             foreach (var tag in State.CurrentQuest.PenalizedTags)
-                if (equippedTags.Contains(tag)) successChance -= 15;
+            {
+                if (equippedTags.Contains(tag)) successChance -= penaltyPerTag;
+            }
 
-            successChance = Math.Clamp(successChance, 25, 100);
+            // Clamp between base and max
+            successChance = Math.Clamp(successChance, baseChance, maxChance);
 
             // Roll the dice
             int roll = _rng.Next(1, 101);
@@ -248,7 +280,7 @@ namespace Engine
             }
             else
             {
-                State.DailyLog.Add($"> FAILED! ({successChance}% chance). Bob died.");
+                State.DailyLog.Add($"> FAILED! ({successChance}% chance). {State.CurrentAdventurer.Name} died.");
             }
 
             // Cleanup and move to next
@@ -258,6 +290,10 @@ namespace Engine
 
             State.CustomersServedToday++;
             NextCustomer();
+        }
+
+        public void Upgrade()
+        {
         }
     }
 }

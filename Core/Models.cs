@@ -4,7 +4,7 @@ using System.Collections.Generic;
 namespace Core
 {
     public enum SlotType { Weapon, Armor, Consumable, Action }
-    public enum ItemTag { LightSource, Short, Long, Heavy, Light, Medium, Healing, Buff }
+    public enum ItemTag { LightSource, Short, Long, Heavy, Light, Medium, Healing, Buff, Ranged }
 
     public abstract class Card
     {
