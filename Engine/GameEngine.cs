@@ -12,6 +12,8 @@ namespace Engine
         private List<Quest> _questDatabase = new();
         private List<string> _adventurerNames = new();
 
+        public int maxCardsInHand = 5;
+
         public GameEngine()
         {
             State = new GameState();
@@ -101,6 +103,7 @@ namespace Engine
             // Shuffle discard pile back into deck
             State.Deck.AddRange(State.DiscardPile);
             State.DiscardPile.Clear();
+
             // Simple shuffle
             State.Deck = State.Deck.OrderBy(x => _rng.Next()).ToList(); 
 
@@ -128,8 +131,9 @@ namespace Engine
             State.EquippedConsumables.Clear();
 
             // Replenish hand up to 5 cards (keep existing cards)
-            int cardsNeeded = 5 - State.Hand.Count;
-            if (cardsNeeded > 0)
+            // Chnged to maxCardsInHand variable for easier tweaking and potential future upgrades
+            int cardsNeeded = (maxCardsInHand - State.Hand.Count);
+            if (cardsNeeded > 1)
             {
                 DrawCards(cardsNeeded);
             }
@@ -175,8 +179,18 @@ namespace Engine
             }
             else if (card is ItemCard itemCard)
             {
-                if (itemCard.Type == SlotType.Weapon) State.EquippedWeapon = itemCard;
-                if (itemCard.Type == SlotType.Armor) State.EquippedArmor = itemCard;
+                if (itemCard.Type == SlotType.Weapon) { 
+                    if (State.EquippedWeapon != null) {
+                        UnequipCard(State.EquippedWeapon); 
+                    }; 
+                    State.EquippedWeapon = itemCard; 
+                }
+                if (itemCard.Type == SlotType.Armor) { 
+                    if (State.EquippedArmor != null) { 
+                        UnequipCard(State.EquippedArmor); 
+                    }; 
+                    State.EquippedArmor = itemCard; 
+                }
                 if (itemCard.Type == SlotType.Consumable && State.EquippedConsumables.Count < 3)
                     State.EquippedConsumables.Add(itemCard);
 
